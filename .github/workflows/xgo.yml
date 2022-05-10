@@ -63,6 +63,48 @@ jobs:
           push: true
           tags: |
             registry.cn-hangzhou.aliyuncs.com/xrsec/xgo:latest
+      - 
+        name: Generate software
+        run: |
+          set -ex
+          git clone https://github.com/crazy-max/xgo.git
+          cd xgo
+          sed -i "s|ghcr.io/crazy-max/xgo|registry.cn-hangzhou.aliyuncs.com/xrsec/xgo|g" xgo.go
+      -
+        name: Build with xgo
+        uses: crazy-max/ghaction-xgo@v1
+        with:
+          xgo_version: latest
+          go_version: ${{ matrix.go_version }}
+          pkg: xgo
+          dest: bin
+          prefix: xgo
+          targets: android/386, android/amd64, android/arm, android/arm64, darwin/amd64, darwin/arm64, freebsd/386, freebsd/amd64, freebsd/arm, freebsd/arm64, linux/386, linux/amd64, linux/arm, linux/arm64, linux/mips, linux/mips64, linux/mips64le, linux/mipsle, linux/ppc64, linux/ppc64le, linux/riscv64, linux/s390x, netbsd/386, netbsd/amd64, netbsd/arm, netbsd/arm64, openbsd/386, openbsd/amd64, openbsd/arm, openbsd/arm64, openbsd/mips64, windows/386, windows/amd64, windows/arm, windows/arm64
+          v: false
+          x: false
+          race: false
+          ldflags: -s -w
+          buildmode: default
+      -
+        name: Delete old Releases
+        uses: dev-drprasad/delete-older-releases@v0.2.0
+        with:
+          repo: ${{ github.repository }}
+          keep_latest: 3
+          delete_tag_pattern: ""
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
+      -
+        name: Make release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: "bin/**"
+          body_path: .github/body.txt
+          name: ${{ github.event.inputs.releaseName }}
+          tag_name: ${{ github.event.inputs.tagName }}
+          draft: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
       -
         name: Get Data 
         id: getDingData

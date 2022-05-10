@@ -1,0 +1,3 @@
+By: [crazy-max/xgo](https://github.com/crazy-max/xgo)
+
+mirror: [xrsec/xgo](registry.cn-hangzhou.aliyuncs.com/xrsec/xgo:latest)
