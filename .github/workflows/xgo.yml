@@ -2,6 +2,14 @@ name: XGo Docker Build
 
 on:
   workflow_dispatch:
+    releaseName:
+      description: 'Set release name'
+      required: true
+      default: "Go CGO cross compiler( AliYun )"
+    tagName:
+      description: 'Set tag name'
+      required: false
+      type: string
 
 jobs:
   XGo_Docker_Build:
