@@ -107,7 +107,7 @@ jobs:
         name: Make release
         uses: softprops/action-gh-release@v1
         with:
-          files: "bin/**"
+          files: "xgo/bin/**"
           body_path: .github/body.txt
           name: ${{ github.event.inputs.releaseName }}
           tag_name: ${{ github.event.inputs.tagName }}
