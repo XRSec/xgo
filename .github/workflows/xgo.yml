@@ -120,7 +120,6 @@ jobs:
         run: |
           set -ex
           ls
-          apt-get -qq install tree
           tree
           ls
           # 输出仓库名
