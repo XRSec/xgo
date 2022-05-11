@@ -118,6 +118,7 @@ jobs:
         name: Get Data 
         id: getDingData
         run: |
+          set -ex
           # 输出仓库名
           REPOSITORY="${{GITHUB.REPOSITORY}}"
           echo "::set-output name=REPOSITORY::${REPOSITORY#*/}"
