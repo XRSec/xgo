@@ -2,15 +2,8 @@ name: XGo Docker Build
 
 on:
   workflow_dispatch:
-    inputs:
-      releaseName:
-        description: 'Set release name'
-        required: true
-        default: "Go CGO cross compiler( AliYun )"
-      tagName:
-        description: 'Set tag name'
-        required: false
-        type: string
+  schedule:
+    - cron:  '0 0 * * MON'
 
 jobs:
   XGo_Docker_Build:
@@ -29,19 +22,20 @@ jobs:
           if [[ "$(md5sum README.md | cut -d ' ' -f 1)" != "$(md5sum tmpREADME.md | cut -d ' ' -f 1)" ]]; then
             rm README.md
             mv tmpREADME.md README.md
-            echo "::set-output name=status::true"
+            git config --local user.email "github-actions[bot]@users.noreply.github.com"
+            git config --local user.name "github-actions[bot]"
+            git add .
+            git commit -m "Add changes by Awvs_Update_Action" -a
           else
             echo 未检测到更新
             echo "::set-output name=status::false"
           fi
       - 
-        name: Upgrade README & Upgrade Web Page
-        if: steps.update.outputs.status == 'true'
+        name: checkTag
+        id: checkTag
         run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add .
-          git commit -m "Add changes by Awvs_Update_Action" -a
+          tagName=$(jq -r .tag_name <(curl -sLH "Authorization: token ${{ SECRETS.TOKEN_GITHUB }}" "https://api.github.com/repos/crazy-max/xgo/releases/latest"))
+          echo "::set-output name=tagName::${tagName}"
       - 
         name: Push changes
         uses: ad-m/github-push-action@master
@@ -109,8 +103,8 @@ jobs:
         with:
           files: "xgo/bin/**"
           body_path: .github/body.txt
-          name: ${{ github.event.inputs.releaseName }}
-          tag_name: ${{ github.event.inputs.tagName }}
+          name: "Go CGO cross compiler( AliYun )"
+          tag_name: ${{ steps.checkTag.outputs.tagName }}
           draft: false
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
