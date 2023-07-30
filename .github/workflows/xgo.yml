@@ -75,8 +75,8 @@ jobs:
           sed -i "s|ghcr.io/crazy-max/xgo|registry.cn-hangzhou.aliyuncs.com/xrsec/xgo|g" xgo.go
       -
         name: Build with xgo
-        uses: crazy-max/ghaction-xgo@v1
-        with:
+        uses: crazy-max/ghaction-xgo@v2
+        with:                                                                                                          trimpath: true
           xgo_version: latest
           go_version: ${{ matrix.go_version }}
           working_dir: ./xgo
