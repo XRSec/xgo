@@ -1,3 +1,15 @@
 By: [crazy-max/xgo](https://github.com/crazy-max/xgo)
 
 mirror: [xrsec/xgo](registry.cn-hangzhou.aliyuncs.com/xrsec/xgo:latest)
+
+Example:
+
+```bash
+# Makefile
+build:
+  @if [ ! -e "example-linux-amd64" ]; then xgo --targets=linux/amd64 -ldflags="-s -w -extldflags -static" ./example; fi
+
+# bash
+xgo --targets=darwin/amd64,darwin/arm64 -ldflags="-s -w -extldflags -static" ./example
+
+```
