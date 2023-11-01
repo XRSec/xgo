@@ -11,5 +11,4 @@ build:
 
 # bash
 xgo --targets=darwin/amd64,darwin/arm64 -ldflags="-s -w -extldflags -static" ./example
-
 ```
