@@ -6,4 +6,4 @@ LABEL Github="https://github.com/XRSec/xgo"
 LABEL org.opencontainers.image.source="https://github.com/XRSec/xgo"
 LABEL org.opencontainers.image.title="xgo"
 
-ENV GOPROXY https://goproxy.io,direct
+ENV GOPROXY https://goproxy.cn,direct
