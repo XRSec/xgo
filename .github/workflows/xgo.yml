@@ -3,18 +3,16 @@ name: XGo Docker Build
 on:
   workflow_dispatch:
   schedule:
-    - cron:  '0 0 * * MON'
+    - cron: '0 0 * * MON'
 
 jobs:
   XGo_Docker_Build:
     name: XGo Docker Build
     runs-on: ubuntu-latest
     steps:
-      - 
-        name: Private Actions Checkout
+      - name: Private Actions Checkout
         uses: actions/checkout@v4
-      - 
-        name: Check The Update
+      - name: Check The Update
         id: update
         run: |
           set -ex
@@ -30,35 +28,29 @@ jobs:
             echo 未检测到更新
             echo "status=false" >> $GITHUB_OUTPUT
           fi
-      - 
-        name: checkTag
+      - name: checkTag
         id: checkTag
         run: |
           tagName=$(jq -r .tag_name <(curl -sLH "Authorization: token ${{ SECRETS.TOKEN_GITHUB }}" "https://api.github.com/repos/crazy-max/xgo/releases/latest"))
           echo "tagName=${tagName}" >> $GITHUB_OUTPUT
-      - 
-        name: Push changes
+      - name: Push changes
         uses: ad-m/github-push-action@master
         if: steps.update.outputs.status == 'true'
         with:
           github_token: ${{ SECRETS.TOKEN_GITHUB }}
           branch: ${{ github.ref }}
-      - 
-        name: Docker Setup QEMU
+      - name: Docker Setup QEMU
         uses: docker/setup-qemu-action@v3
-      - 
-        name: Docker Setup Buildx
+      - name: Docker Setup Buildx
         uses: docker/setup-buildx-action@v3
-      - 
-        name: Docker Login in Aliyun
+      - name: Docker Login in Aliyun
         uses: docker/login-action@v3
         with:
           registry: registry.cn-hangzhou.aliyuncs.com
           username: ${{ secrets.DOCKERHUB_ACCOUNT_ALIYUN }}
           password: ${{ secrets.DOCKERHUB_PASSWORD_ALIYUN }}
-      - 
-        name: Build and push Docker images
-        uses: docker/build-push-action@v2.7.0
+      - name: Build and push Docker images
+        uses: docker/build-push-action@v6
         with:
           context: .
           platforms: linux/amd64,linux/arm64
@@ -66,15 +58,13 @@ jobs:
           push: true
           tags: |
             registry.cn-hangzhou.aliyuncs.com/xrsec/xgo:latest
-      - 
-        name: Generate software
+      - name: Generate software
         run: |
           set -ex
           git clone https://github.com/crazy-max/xgo.git
           cd xgo
           sed -i "s|ghcr.io/crazy-max/xgo|registry.cn-hangzhou.aliyuncs.com/xrsec/xgo|g" xgo.go
-      -
-        name: Build with xgo
+      - name: Build with xgo
         uses: crazy-max/ghaction-xgo@v3
         with:
           xgo_version: latest
@@ -88,8 +78,7 @@ jobs:
           race: false
           ldflags: -s -w
           buildmode: default
-      -
-        name: Delete old Releases
+      - name: Delete old Releases
         uses: dev-drprasad/delete-older-releases@v0.3.4
         with:
           repo: ${{ github.repository }}
@@ -97,8 +86,7 @@ jobs:
           delete_tag_pattern: ""
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
-      -
-        name: Make release
+      - name: Make release
         uses: softprops/action-gh-release@v2
         with:
           files: "xgo/bin/**"
@@ -108,8 +96,7 @@ jobs:
           draft: false
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
-      -
-        name: Get Data 
+      - name: Get Data
         id: getDingData
         run: |
           set -ex
@@ -133,19 +120,7 @@ jobs:
           else
             echo "URL=${URL}" >> $GITHUB_OUTPUT
           fi
-      - 
-        name: Send dingding notify
-        uses: zcong1993/actions-ding@master
+      - uses: junka/feishu-bot-webhook-action@main
         with:
-          dingToken: ${{ SECRETS.DING_TOKEN }}
-          secret: ${{ SECRETS.DING_SECRET }}
-          body: |
-            {
-              "msgtype": "link",
-              "link": {
-                  "text": "${{ steps.getDingData.outputs.DESCRIPTION }}",
-                  "title":  "${{ steps.getDingData.outputs.REPOSITORY }} WorkFlow ${{ GITHUB.JOB }} Success!",
-                  "picUrl": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
-                  "messageUrl": "${{ steps.getDingData.outputs.URL }}"
-              }
-            }
+          webhook: ${{ secrets.FEISHU_BOT_WEBHOOK }}
+          signkey: ${{ secrets.FEISHU_BOT_SIGNKEY }}
