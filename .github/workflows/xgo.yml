@@ -1,6 +1,7 @@
 name: XGo Docker Build
 
 on:
+  push:
   workflow_dispatch:
   schedule:
     - cron: '0 0 * * MON'
@@ -11,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Private Actions Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Check The Update
         id: update
         run: |
@@ -34,23 +35,23 @@ jobs:
           tagName=$(jq -r .tag_name <(curl -sLH "Authorization: token ${{ SECRETS.TOKEN_GITHUB }}" "https://api.github.com/repos/crazy-max/xgo/releases/latest"))
           echo "tagName=${tagName}" >> $GITHUB_OUTPUT
       - name: Push changes
-        uses: ad-m/github-push-action@master
+        uses: ad-m/github-push-action@v0.8.0
         if: steps.update.outputs.status == 'true'
         with:
           github_token: ${{ SECRETS.TOKEN_GITHUB }}
           branch: ${{ github.ref }}
       - name: Docker Setup QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v3.6.0
       - name: Docker Setup Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v3.11.1
       - name: Docker Login in Aliyun
-        uses: docker/login-action@v3
+        uses: docker/login-action@v3.5.0
         with:
           registry: registry.cn-hangzhou.aliyuncs.com
           username: ${{ secrets.DOCKERHUB_ACCOUNT_ALIYUN }}
           password: ${{ secrets.DOCKERHUB_PASSWORD_ALIYUN }}
       - name: Build and push Docker images
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v6.18.0
         with:
           context: .
           platforms: linux/amd64,linux/arm64
@@ -65,7 +66,7 @@ jobs:
           cd xgo
           sed -i "s|ghcr.io/crazy-max/xgo|registry.cn-hangzhou.aliyuncs.com/xrsec/xgo|g" xgo.go
       - name: Build with xgo
-        uses: crazy-max/ghaction-xgo@v3
+        uses: crazy-max/ghaction-xgo@v3.2.0
         with:
           xgo_version: latest
           go_version: ${{ matrix.go_version }}
@@ -87,7 +88,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
       - name: Make release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v2.3.2
         with:
           files: "xgo/bin/**"
           body_path: .github/body.txt
@@ -96,31 +97,9 @@ jobs:
           draft: false
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
-      - name: Get Data
-        id: getDingData
-        run: |
-          set -ex
-          # 输出仓库名
-          REPOSITORY="${{GITHUB.REPOSITORY}}"
-          echo "REPOSITORY=${REPOSITORY#*/}" >> $GITHUB_OUTPUT
-
-          # 获取用户仓库信息
-          # RESPONSE="$(curl -sLm 10 https://api.github.com/repos/${{ GITHUB.REPOSITORY }})"
-          # 建议填写自己的 TOKEN
-          RESPONSE="$(curl -sLm 10 https://api.github.com/repos/${{ GITHUB.REPOSITORY }} -H "Authorization: token ${{ SECRETS.TOKEN_GITHUB }}")"
-          
-          # 获取 用户仓库 设置的 描述，如果为空，可能是没有使用 TOKEN
-          DESCRIPTION="$(jq -r .description <(echo ${RESPONSE}))"
-          echo "DESCRIPTION=${DESCRIPTION}" >> $GITHUB_OUTPUT
-
-          # 获取 用户仓库 设置的 URL, 如果没有就输出 Github 地址
-          URL="$(jq -r .homepage <(echo ${RESPONSE}))"
-          if [[ "${URL}" == "null" || "${URL}" == "" ]]; then
-            echo "URL=${{ GITHUB.SERVER_URL }}/${{ GITHUB.REPOSITORY }}" >> $GITHUB_OUTPUT
-          else
-            echo "URL=${URL}" >> $GITHUB_OUTPUT
-          fi
-      - uses: junka/feishu-bot-webhook-action@main
+      -
+        name: Send notification to Feishu
+        uses: XRSec/feishu-bot-webhook-action@v1
         with:
-          webhook: ${{ secrets.FEISHU_BOT_WEBHOOK }}
-          signkey: ${{ secrets.FEISHU_BOT_SIGNKEY }}
+          FEISHU_BOT_WEBHOOK: ${{ secrets.FEISHU_BOT_WEBHOOK }}
+          FEISHU_BOT_SIGNKEY: ${{ secrets.FEISHU_BOT_SIGNKEY }}
